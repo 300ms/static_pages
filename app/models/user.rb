@@ -1,13 +1,15 @@
+# frozen_string_literal: true
+
 class User < ApplicationRecord
   attr_accessor :remember_token, :activation_token, :reset_token
+  has_many :microposts, dependent: :destroy
   before_save :downcase_email
   before_create :create_activation_digest
-
-  VALID_EMAIL_REGEX = /\A[\w+\-.]+@[a-z\d\-.]+\.[a-z]+\z/i
+  VALID_EMAIL_REGEX = /\A[\w+\-.]+@[a-z\d\-.]+\.[a-z]+\z/i.freeze
   validates :name,  presence: true, length: { maximum: 50 }
-  validates :email, presence: true, uniqueness: {case_sensitive: false}, length: { maximum: 255 }, format: { with: VALID_EMAIL_REGEX }
+  validates :email, presence: true, uniqueness: { case_sensitive: false }, length: { maximum: 255 }, format: { with: VALID_EMAIL_REGEX }
   has_secure_password
-  validates :password,  presence: true, length: { within: 6..15 }
+  validates :password, presence: true, length: { within: 6..15 }
 
   def self.digest(string)
     cost = ActiveModel::SecurePassword.min_cost ? BCrypt::Engine::MIN_COST :
@@ -21,17 +23,22 @@ class User < ApplicationRecord
 
   def remember
     self.remember_token = User.new_token
-    update_attribute(:remember_digest,User.digest(remember_token))
+    update_attribute(:remember_digest, User.digest(remember_token))
   end
 
   def authenticated?(attribute, token)
-    digest = self.send("#{attribute}_digest")
+    digest = send("#{attribute}_digest")
     return false if digest.nil?
+
     BCrypt::Password.new(digest).is_password?(token)
   end
 
   def forget
     update_attribute(:remember_digest, nil)
+  end
+
+  def feed
+    Micropost.where("user_id = ?", id)
   end
 
   def downcase_email
@@ -61,9 +68,5 @@ class User < ApplicationRecord
 
   def send_password_reset_email
     UserMailer.password_reset(self).deliver_now
-  end
-
-  def password_reset_expired?
-    reset_sent_at < 2.hours.ago
   end
 end
