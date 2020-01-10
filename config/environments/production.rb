@@ -74,7 +74,7 @@ Rails.application.configure do
     :authentication => :plain,
     :user_name      => ENV['xxx'],  ###  CHANGE ACCOUNT INFORMATION  ###
     :password       => ENV['xxx'],  ###  heroku config:get SENDGRID_USERNAME  ###
-                                                  ###  heroku config:get SENDGRID_PASSWORD  ###
+                                    ###  heroku config:get SENDGRID_PASSWORD  ###
     :domain         => 'heroku.com',
     :enable_starttls_auto => true
   }
